@@ -1,0 +1,187 @@
+:root {
+  font-family: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", sans-serif;
+  line-height: 1.4;
+  color: #122026;
+  background:
+    radial-gradient(circle at 0% 0%, #d7f3df 0%, transparent 42%),
+    radial-gradient(circle at 100% 20%, #d8ebff 0%, transparent 45%),
+    #f5f8f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  width: min(1200px, 96vw);
+  margin: 1.25rem auto 2rem;
+}
+
+.top {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  border: 1px solid #c8ded5;
+  background: #ffffffcc;
+  backdrop-filter: blur(3px);
+}
+
+.top h1 {
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.meta {
+  margin: 0.35rem 0 0;
+  color: #48656f;
+  font-size: 0.9rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.tab {
+  border: 1px solid #b7d2c8;
+  background: #f8fcfa;
+  color: #173137;
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #19383a;
+  border-color: #19383a;
+  color: #f4fffb;
+}
+
+.notice {
+  margin: 0.8rem 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: #e9f2f7;
+  border: 1px solid #c7dde8;
+}
+
+.notice.ok {
+  background: #e9f6ea;
+  border-color: #b9dfbc;
+}
+
+.notice.err {
+  background: #fdecec;
+  border-color: #edc0c0;
+}
+
+.panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid #c9ddd8;
+  background: #fffffff2;
+}
+
+.grid-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #2c4a53;
+  font-size: 0.9rem;
+}
+
+input,
+select,
+button {
+  border: 1px solid #b6ccd3;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.6rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+.primary {
+  border-color: #1f5055;
+  background: #1f5055;
+  color: #f3fffd;
+}
+
+.inline-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table {
+  margin-top: 1rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid #d4e4e0;
+  padding: 0.45rem 0.35rem;
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.cards {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.card {
+  border-radius: 12px;
+  border: 1px solid #cadcda;
+  background: #f8fcfa;
+  padding: 0.8rem;
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.big {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0.3rem 0 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    width: 98vw;
+    margin-top: 0.7rem;
+  }
+
+  .panel {
+    padding: 0.75rem;
+  }
+}
