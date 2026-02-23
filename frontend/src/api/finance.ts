@@ -1,13 +1,16 @@
-﻿import { apiGet, apiPost } from "./client";
+import { apiGet, apiPost } from "./client";
 import type {
   Account,
   AdjustmentKpi,
   AssetPurchaseResult,
+  AuthTokens,
   CreateAccountInput,
   CreateAssetPurchaseInput,
   CreateTransactionInput,
+  CurrentUser,
   InitState,
   KpiPeriodInput,
+  LoginInput,
   PagedTransactions,
   ReconcileInput,
   ReconcileResult,
@@ -15,6 +18,30 @@ import type {
   Transaction,
   TransactionFilter,
 } from "../types/finance";
+
+export function login(input: LoginInput): Promise<AuthTokens> {
+  return apiPost<AuthTokens>("/auth/login", input, { skipAuthRetry: true });
+}
+
+export function refreshToken(refreshTokenValue: string): Promise<AuthTokens> {
+  return apiPost<AuthTokens>(
+    "/auth/refresh",
+    { refreshToken: refreshTokenValue },
+    { skipAuthRetry: true },
+  );
+}
+
+export function logout(refreshTokenValue: string): Promise<{ ok: boolean }> {
+  return apiPost<{ ok: boolean }>(
+    "/auth/logout",
+    { refreshToken: refreshTokenValue },
+    { skipAuthRetry: true },
+  );
+}
+
+export function getCurrentUser(): Promise<CurrentUser> {
+  return apiGet<CurrentUser>("/auth/me", undefined, { skipAuthRetry: true });
+}
 
 export function initApp(): Promise<InitState> {
   return apiGet<InitState>("/system/init");

@@ -1,4 +1,4 @@
-﻿export type AccountType = "Asset" | "Liability";
+export type AccountType = "Asset" | "Liability";
 export type AssetPurpose =
   | "Investment"
   | "Productivity"
@@ -10,6 +10,23 @@ export type AmortizationStrategy = "Linear" | "Accelerated";
 export interface InitState {
   dataDir: string;
   databasePath: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
 }
 
 export interface Account {

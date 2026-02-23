@@ -1,4 +1,4 @@
-﻿import { create } from "zustand";
+import { create } from "zustand";
 import {
   createAccount,
   createAssetPurchase,
@@ -50,9 +50,25 @@ interface FinanceState {
   refreshReports: () => Promise<void>;
   submitReconcile: (input: ReconcileInput) => Promise<void>;
   clearNotices: () => void;
+  reset: () => void;
 }
 
 const currentMonth = new Date().toISOString().slice(0, 7);
+
+const initialState = {
+  activeTab: "accounts" as TabKey,
+  appInfo: null as InitState | null,
+  periodYm: currentMonth,
+  accounts: [] as Account[],
+  transactions: [] as Transaction[],
+  cashReport: null as Report | null,
+  utilityReport: null as Report | null,
+  kpi: null as AdjustmentKpi | null,
+  reconcileResult: null as ReconcileResult | null,
+  loading: false,
+  message: null as string | null,
+  error: null as string | null,
+};
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
@@ -62,21 +78,11 @@ function toErrorMessage(error: unknown): string {
 }
 
 export const useFinanceStore = create<FinanceState>((set, get) => ({
-  activeTab: "accounts",
-  appInfo: null,
-  periodYm: currentMonth,
-  accounts: [],
-  transactions: [],
-  cashReport: null,
-  utilityReport: null,
-  kpi: null,
-  reconcileResult: null,
-  loading: false,
-  message: null,
-  error: null,
+  ...initialState,
   setActiveTab: (tab) => set({ activeTab: tab }),
   setPeriodYm: (periodYm) => set({ periodYm }),
   clearNotices: () => set({ message: null, error: null }),
+  reset: () => set({ ...initialState }),
   bootstrap: async () => {
     set({ loading: true, error: null, message: null });
     try {
@@ -85,6 +91,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       await get().refreshAll();
     } catch (error) {
       set({ error: toErrorMessage(error) });
+      throw error;
     } finally {
       set({ loading: false });
     }

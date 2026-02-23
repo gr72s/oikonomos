@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   AppBar,
@@ -25,6 +25,8 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import LoginPage from "./pages/LoginPage";
+import { useAuthStore } from "./store/useAuthStore";
 import { useFinanceStore, type TabKey } from "./store/useFinanceStore";
 import type { AccountType, AssetPurpose } from "./types/finance";
 
@@ -42,6 +44,14 @@ function centsToDisplay(value: number): string {
 }
 
 function App() {
+  const {
+    isAuthenticated,
+    currentUser,
+    authLoading,
+    bootstrapAuth,
+    logout,
+  } = useAuthStore();
+
   const {
     activeTab,
     appInfo,
@@ -64,6 +74,7 @@ function App() {
     refreshReports,
     submitReconcile,
     clearNotices,
+    reset,
   } = useFinanceStore();
 
   const [accountName, setAccountName] = useState("");
@@ -91,8 +102,17 @@ function App() {
   );
 
   useEffect(() => {
-    void bootstrap();
-  }, [bootstrap]);
+    void bootstrapAuth();
+  }, [bootstrapAuth]);
+
+  useEffect(() => {
+    if (isAuthenticated && !appInfo) {
+      void bootstrap();
+    }
+    if (!isAuthenticated) {
+      reset();
+    }
+  }, [isAuthenticated, appInfo, bootstrap, reset]);
 
   useEffect(() => {
     if (!txFromAccountId && defaultFromAccountId) {
@@ -107,6 +127,11 @@ function App() {
     setActiveTab(value);
     clearNotices();
   };
+
+  async function handleLogout(): Promise<void> {
+    await logout();
+    reset();
+  }
 
   async function handleCreateAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -174,11 +199,31 @@ function App() {
     setReconcileNote("");
   }
 
+  if (authLoading && !isAuthenticated) {
+    return (
+      <Box sx={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
+        <Typography>Checking authentication...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f4f6f8", pb: 4 }}>
       <AppBar position="static">
         <Toolbar sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1, py: 1 }}>
-          <Typography variant="h6">Oikonomos</Typography>
+          <Stack direction="row" sx={{ width: "100%" }} justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Oikonomos</Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Typography variant="body2">{currentUser?.email ?? ""}</Typography>
+              <Button color="inherit" variant="outlined" onClick={() => void handleLogout()}>
+                Logout
+              </Button>
+            </Stack>
+          </Stack>
           <Typography variant="body2">
             Database: {appInfo?.databasePath ?? "loading..."} | Month: {periodYm}
           </Typography>

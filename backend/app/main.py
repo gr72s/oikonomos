@@ -1,16 +1,26 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import sqlite3
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import API_PREFIX
 from app.db import initialize_database
 from app.models import ApiError, ErrorResponse
-from app.routers import accounts, asset_purchases, kpis, reconciliations, reports, system, transactions
+from app.routers import (
+    accounts,
+    asset_purchases,
+    auth,
+    kpis,
+    reconciliations,
+    reports,
+    system,
+    transactions,
+)
+from app.services.auth import get_current_user
 
 
 @asynccontextmanager
@@ -38,7 +48,11 @@ def handle_api_error(_, exc: ApiError) -> JSONResponse:
 
 @app.exception_handler(sqlite3.IntegrityError)
 def handle_integrity_error(_, exc: sqlite3.IntegrityError) -> JSONResponse:
-    payload = ErrorResponse(code="db_integrity_error", message="database integrity error", details={"reason": str(exc)})
+    payload = ErrorResponse(
+        code="db_integrity_error",
+        message="database integrity error",
+        details={"reason": str(exc)},
+    )
     return JSONResponse(status_code=400, content=payload.model_dump())
 
 
@@ -53,10 +67,15 @@ def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-app.include_router(system.router, prefix=API_PREFIX)
-app.include_router(accounts.router, prefix=API_PREFIX)
-app.include_router(transactions.router, prefix=API_PREFIX)
-app.include_router(asset_purchases.router, prefix=API_PREFIX)
-app.include_router(reconciliations.router, prefix=API_PREFIX)
-app.include_router(reports.router, prefix=API_PREFIX)
-app.include_router(kpis.router, prefix=API_PREFIX)
+app.include_router(auth.router, prefix=API_PREFIX)
+
+protected_api = APIRouter(prefix=API_PREFIX, dependencies=[Depends(get_current_user)])
+protected_api.include_router(system.router)
+protected_api.include_router(accounts.router)
+protected_api.include_router(transactions.router)
+protected_api.include_router(asset_purchases.router)
+protected_api.include_router(reconciliations.router)
+protected_api.include_router(reports.router)
+protected_api.include_router(kpis.router)
+
+app.include_router(protected_api)

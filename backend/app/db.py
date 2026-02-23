@@ -1,16 +1,38 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import sqlite3
+import uuid
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterator, Optional
 
-from app.config import get_data_dir, get_db_path
+import bcrypt
+
+from app.config import get_data_dir, get_db_path, get_default_admin_email, get_default_admin_password
 from app.models import ApiError
 
 
 SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS user_refresh_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_user_refresh_tokens_user_id ON user_refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_refresh_tokens_expires_at ON user_refresh_tokens(expires_at);
 CREATE TABLE IF NOT EXISTS accounts (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -94,6 +116,16 @@ def now_utc_rfc3339() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def parse_rfc3339_utc(value: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ApiError("invalid_input", "time must be RFC3339") from exc
+    if parsed.tzinfo is None:
+        raise ApiError("invalid_input", "time must include timezone")
+    return parsed.astimezone(timezone.utc)
+
+
 def normalize_timestamp(value: Optional[str]) -> str:
     if value is None:
         return now_utc_rfc3339()
@@ -145,16 +177,37 @@ def ensure_data_dir() -> Path:
 
 
 def get_connection() -> sqlite3.Connection:
+    ensure_data_dir()
     conn = sqlite3.connect(get_db_path())
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
+def ensure_default_admin_user(conn: sqlite3.Connection) -> None:
+    email = get_default_admin_email()
+    existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+    if existing is not None:
+        return
+
+    password_hash = bcrypt.hashpw(
+        get_default_admin_password().encode("utf-8"), bcrypt.gensalt()
+    ).decode("utf-8")
+    now = now_utc_rfc3339()
+    conn.execute(
+        """
+        INSERT INTO users (id, email, password_hash, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, 1, ?, ?)
+        """,
+        (str(uuid.uuid4()), email, password_hash, now, now),
+    )
+
+
 def initialize_database() -> None:
     ensure_data_dir()
     with get_connection() as conn:
         conn.executescript(SCHEMA_SQL)
+        ensure_default_admin_user(conn)
 
 
 @contextmanager

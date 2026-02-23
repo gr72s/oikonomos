@@ -1,10 +1,10 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import date
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class AccountType(str, Enum):
@@ -157,6 +157,27 @@ class AdjustmentKpiDto(BaseModel):
     ratio: float
 
 
+class LoginInput(BaseModel):
+    email: str
+    password: str
+
+
+class TokenRefreshInput(BaseModel):
+    refreshToken: str
+
+
+class AuthTokensDto(BaseModel):
+    accessToken: str
+    refreshToken: str
+    tokenType: str = "Bearer"
+    expiresIn: int
+
+
+class CurrentUserDto(BaseModel):
+    id: str
+    email: str
+
+
 class ErrorResponse(BaseModel):
     code: str
     message: str
@@ -164,7 +185,13 @@ class ErrorResponse(BaseModel):
 
 
 class ApiError(Exception):
-    def __init__(self, code: str, message: str, status_code: int = 400, details: Optional[dict] = None):
+    def __init__(
+        self,
+        code: str,
+        message: str,
+        status_code: int = 400,
+        details: Optional[dict] = None,
+    ):
         self.code = code
         self.message = message
         self.status_code = status_code
